@@ -28,6 +28,10 @@ pip install -r requirements.txt -q
 echo "Running PyInstaller..."
 pyinstaller qrcode_gen.spec --clean --noconfirm
 
+# 4. Place config.ini next to the executable so users can edit defaults
+cp config.ini dist/
+
 echo ""
-echo "Build complete. Output is in dist/QRCodeGen/"
-echo "Run with: ./dist/QRCodeGen/QRCodeGen"
+echo "Build complete."
+echo "  Executable : dist/QRCodeGen"
+echo "  Config     : dist/config.ini  (edit to change defaults)"

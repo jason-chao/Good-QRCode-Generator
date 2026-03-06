@@ -14,7 +14,13 @@ from PIL import Image, ImageTk
 # Helpers
 # ---------------------------------------------------------------------------
 
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
+# In a PyInstaller onefile build sys.executable is the single bundled exe;
+# in a onedir build or plain source run, fall back to the script's directory.
+if getattr(sys, "frozen", False):
+    _BASE_DIR = os.path.dirname(sys.executable)
+else:
+    _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(_BASE_DIR, "config.ini")
 
 NAMED_COLOURS = [
     "black", "white", "red", "green", "blue", "yellow",

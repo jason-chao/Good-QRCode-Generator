@@ -59,19 +59,23 @@ Build scripts handle virtual environment creation, dependency installation, and 
 **Linux**
 ```bash
 bash build_linux.sh
-# Output: dist/QRCodeGen/QRCodeGen
+# Output: dist/QRCodeGen   (single file)
+#         dist/config.ini
 ```
 
 **macOS**
 ```bash
 bash build_macos.sh
-# Output: dist/QRCodeGen.app  and  dist/QRCodeGen/QRCodeGen
+# Output: dist/QRCodeGen       (single-file binary)
+#         dist/QRCodeGen.app   (.app bundle)
+#         dist/config.ini
 ```
 
 **Windows**
 ```bat
 build_windows.bat
-REM Output: dist\QRCodeGen\QRCodeGen.exe
+REM Output: dist\QRCodeGen.exe  (single file)
+REM         dist\config.ini
 ```
 
 ## Configuration

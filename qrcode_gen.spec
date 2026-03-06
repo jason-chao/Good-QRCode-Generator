@@ -2,27 +2,22 @@
 #
 # PyInstaller spec file for QR Code Generator
 #
+# Produces a single-file executable on all platforms.
+# config.ini is NOT bundled inside the exe; distribute it alongside the
+# executable so users can edit their defaults.
+#
 # Usage (run from project root with venv active):
 #   pyinstaller qrcode_gen.spec
-#
-# The spec file is cross-platform; PyInstaller adapts the output for the
-# OS on which it runs.  Build once per target platform.
 
 import sys
-from pathlib import Path
 
 block_cipher = None
-
-# Include config.ini next to the executable so users can edit defaults
-added_files = [
-    ("config.ini", "."),
-]
 
 a = Analysis(
     ["qrcode_gen.py"],
     pathex=[],
     binaries=[],
-    datas=added_files,
+    datas=[],
     hiddenimports=[
         "PIL._tkinter_finder",
         "qrcode.image.pil",
@@ -43,34 +38,35 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(
     pyz,
     a.scripts,
-    [],
-    exclude_binaries=True,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    exclude_binaries=False,     # onefile: embed everything into the exe
     name="QRCodeGen",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=False,          # No console window on Windows / macOS
+    console=False,              # No console window on Windows / macOS
     disable_windowed_traceback=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon="assets/icon.ico",  # Uncomment and supply icon file if desired
+    # icon="assets/icon.ico",   # Uncomment and supply icon file if desired
 )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
-    strip=False,
-    upx=True,
-    upx_exclude=[],
-    name="QRCodeGen",
-)
-
-# macOS: also produce a .app bundle
+# macOS: also produce a .app bundle (requires a COLLECT pass)
 if sys.platform == "darwin":
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.zipfiles,
+        a.datas,
+        strip=False,
+        upx=True,
+        upx_exclude=[],
+        name="QRCodeGen",
+    )
     app = BUNDLE(
         coll,
         name="QRCodeGen.app",

@@ -24,11 +24,16 @@ echo "Installing dependencies..."
 pip install --upgrade pip -q
 pip install -r requirements.txt -q
 
-# 3. Build with PyInstaller (produces both a folder and a .app bundle)
+# 3. Build with PyInstaller (produces a single-file exe and a .app bundle)
 echo "Running PyInstaller..."
 pyinstaller qrcode_gen.spec --clean --noconfirm
 
+# 4. Place config.ini next to the executable so users can edit defaults
+cp config.ini dist/
+cp config.ini "dist/QRCodeGen.app/Contents/MacOS/"
+
 echo ""
 echo "Build complete."
+echo "  Single exe : dist/QRCodeGen"
 echo "  App bundle : dist/QRCodeGen.app"
-echo "  Raw binary : dist/QRCodeGen/QRCodeGen"
+echo "  Config     : dist/config.ini  (edit to change defaults)"

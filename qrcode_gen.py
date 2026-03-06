@@ -312,14 +312,20 @@ class QRCodeApp(tk.Tk):
         return value == "" or value.isdigit()
 
     def _set_window_icon(self):
-        icon_path = os.path.join(_RES_DIR, "assets", "icon.png")
-        if os.path.isfile(icon_path):
-            try:
-                img = Image.open(icon_path)
-                self._app_icon = ImageTk.PhotoImage(img)
-                self.iconphoto(True, self._app_icon)
-            except Exception:
-                pass
+        try:
+            if sys.platform == "win32":
+                # iconbitmap gives consistent title-bar, taskbar, and alt-tab icons on Windows
+                ico_path = os.path.join(_RES_DIR, "assets", "icon.ico")
+                if os.path.isfile(ico_path):
+                    self.iconbitmap(ico_path)
+            else:
+                png_path = os.path.join(_RES_DIR, "assets", "icon.png")
+                if os.path.isfile(png_path):
+                    img = Image.open(png_path)
+                    self._app_icon = ImageTk.PhotoImage(img)
+                    self.iconphoto(True, self._app_icon)
+        except Exception:
+            pass
 
     def _centre_window(self):
         self.update_idletasks()

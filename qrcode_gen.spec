@@ -18,7 +18,8 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ("assets/icon.png", "assets"),   # window icon (bundled inside the exe)
+        ("assets/icon.png", "assets"),   # window icon — Linux / macOS (iconphoto)
+        ("assets/icon.ico", "assets"),   # window icon — Windows     (iconbitmap)
     ],
     hiddenimports=[
         "PIL._tkinter_finder",

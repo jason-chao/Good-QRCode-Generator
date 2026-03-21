@@ -298,11 +298,19 @@ class QRCodeApp(tk.Tk):
         self._preview_label = ttk.Label(prev, text="No QR code generated yet.")
         self._preview_label.pack(expand=True)
 
-        # Save button (hidden until an image is ready)
+        # Action buttons (hidden until an image is ready)
+        btn_frame = ttk.Frame(self)
+        btn_frame.grid(row=2, column=0, pady=(0, 10))
+
         self._save_btn = ttk.Button(
-            self, text="Save image…", command=self._on_save, state="disabled",
+            btn_frame, text="Save image…", command=self._on_save, state="disabled",
         )
-        self._save_btn.grid(row=2, column=0, pady=(0, 10))
+        self._save_btn.grid(row=0, column=0, padx=4)
+
+        self._copy_btn = ttk.Button(
+            btn_frame, text="Copy image", command=self._on_copy, state="disabled",
+        )
+        self._copy_btn.grid(row=0, column=1, padx=4)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -380,6 +388,7 @@ class QRCodeApp(tk.Tk):
         self._qr_image = img
         self._show_preview(img)
         self._save_btn.configure(state="normal")
+        self._copy_btn.configure(state="normal")
 
     def _show_preview(self, img: Image.Image):
         # Scale to fit inside a 300×300 box while keeping aspect ratio
@@ -438,6 +447,106 @@ class QRCodeApp(tk.Tk):
             messagebox.showinfo("Saved", f"QR code saved to:\n{path}")
         except Exception as exc:
             messagebox.showerror("Save error", str(exc))
+
+    def _on_copy(self):
+        if self._qr_image is None:
+            return
+
+        try:
+            self._copy_image_to_clipboard(self._qr_image)
+            messagebox.showinfo("Copied", "QR code copied to clipboard.")
+        except Exception as exc:
+            messagebox.showerror("Copy error", f"Failed to copy image to clipboard:\n{exc}")
+
+    @staticmethod
+    def _copy_image_to_clipboard(img: Image.Image):
+        # Flatten image to avoid transparency issues on some platforms
+        if img.mode == "RGBA":
+            bg = Image.new("RGB", img.size, (255, 255, 255))
+            bg.paste(img, mask=img.split()[3])
+            img = bg
+        elif img.mode != "RGB":
+            img = img.convert("RGB")
+
+        if sys.platform == "win32":
+            import ctypes
+            
+            output = io.BytesIO()
+            img.save(output, format="BMP")
+            data = output.getvalue()
+            dib_data = data[14:]
+            
+            CF_DIB = 8
+            GMEM_MOVEABLE = 0x0002
+            
+            kernel32 = ctypes.windll.kernel32
+            user32 = ctypes.windll.user32
+            
+            hGlobalMem = kernel32.GlobalAlloc(GMEM_MOVEABLE, len(dib_data))
+            if not hGlobalMem:
+                raise Exception("Failed to allocate global memory.")
+                
+            lpGlobalMem = kernel32.GlobalLock(hGlobalMem)
+            if not lpGlobalMem:
+                kernel32.GlobalFree(hGlobalMem)
+                raise Exception("Failed to lock global memory.")
+                
+            try:
+                ctypes.memmove(lpGlobalMem, dib_data, len(dib_data))
+            finally:
+                kernel32.GlobalUnlock(hGlobalMem)
+                
+            if not user32.OpenClipboard(0):
+                kernel32.GlobalFree(hGlobalMem)
+                raise Exception("Failed to open clipboard.")
+                
+            try:
+                user32.EmptyClipboard()
+                if not user32.SetClipboardData(CF_DIB, hGlobalMem):
+                    kernel32.GlobalFree(hGlobalMem)
+                    raise Exception("Failed to set clipboard data.")
+            finally:
+                user32.CloseClipboard()
+                
+        elif sys.platform == "darwin":
+            import subprocess
+            import tempfile
+            
+            fd, path = tempfile.mkstemp(suffix=".png")
+            try:
+                os.close(fd)
+                img.save(path, format="PNG")
+                script = f'set the clipboard to (read (POSIX file "{path}") as TIFF picture)'
+                subprocess.run(["osascript", "-e", script], check=True)
+            finally:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+                    
+        else:  # Linux and others
+            import subprocess
+            
+            output = io.BytesIO()
+            img.save(output, format="PNG")
+            data = output.getvalue()
+            
+            wayland_display = os.environ.get("WAYLAND_DISPLAY")
+            
+            if wayland_display:
+                try:
+                    subprocess.run(["wl-copy", "-t", "image/png"], input=data, check=True)
+                except FileNotFoundError:
+                    raise Exception("wl-copy is not installed. Please install wl-clipboard.")
+                except subprocess.CalledProcessError as e:
+                    raise Exception(f"wl-copy failed: {e}")
+            else:
+                try:
+                    subprocess.run(["xclip", "-selection", "clipboard", "-t", "image/png", "-i"], input=data, check=True)
+                except FileNotFoundError:
+                    raise Exception("xclip is not installed. Please install xclip.")
+                except subprocess.CalledProcessError as e:
+                    raise Exception(f"xclip failed: {e}")
 
 
 # ---------------------------------------------------------------------------

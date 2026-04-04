@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Good QR Code Generator</title>
+  <style>
+    /* ── Design tokens ───────────────────────────────────────────── */
+    :root {
+      --bg:          #eef0f4;
+      --card:        #ffffff;
+      --border:      #dde1e9;
+      --border-in:   #c9d0db;
+      --accent:      #2563eb;
+      --accent-dk:   #1d4ed8;
+      --accent-glow: rgba(37,99,235,.16);
+      --text:        #0f172a;
+      --text-2:      #374151;
+      --text-muted:  #64748b;
+      --text-label:  #8b95a3;
+      --field-bg:    #f8fafc;
+      --r:           8px;
+      --r-card:      14px;
+      --shadow:      0 1px 3px rgba(0,0,0,.05), 0 8px 28px rgba(0,0,0,.08);
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 40px 16px 64px;
+    }
+
+    /* ── Page shell ──────────────────────────────────────────────── */
+    .page { width: 100%; max-width: 840px; }
+
+    /* ── Header ──────────────────────────────────────────────────── */
+    .page-header { margin-bottom: 18px; }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .logo-icon { color: var(--accent); flex-shrink: 0; }
+
+    .logo-name {
+      font-size: 1.1875rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.03em;
+    }
+
+    .logo-tagline {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    /* ── Feature strip ───────────────────────────────────────────── */
+    .features {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+
+    .feature-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 12px 2px 0;
+      font-size: 0.7rem;
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+
+    .feature-pill + .feature-pill {
+      border-left: 1px solid var(--border-in);
+      padding-left: 12px;
+    }
+
+    .feature-pill svg { color: #4ade80; flex-shrink: 0; }
+
+    /* ── Card (two-column grid) ──────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--r-card);
+      box-shadow: var(--shadow);
+      display: grid;
+      grid-template-columns: 390px 1px 1fr;
+      min-height: 520px;
+    }
+
+    /* ── Pane shared ─────────────────────────────────────────────── */
+    .pane-divider { background: var(--border); }
+
+    .settings-pane {
+      padding: 30px 28px 26px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-pane {
+      padding: 30px 28px 26px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .pane-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      color: var(--text-label);
+      margin-bottom: 22px;
+    }
+
+    /* ── Fields ──────────────────────────────────────────────────── */
+    .fields { display: flex; flex-direction: column; gap: 16px; flex: 1; }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+
+    .field-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-2);
+    }
+
+    /* ── Inputs & selects ────────────────────────────────────────── */
+    input[type="text"],
+    input[type="number"],
+    select {
+      height: 36px;
+      border: 1.5px solid var(--border-in);
+      border-radius: var(--r);
+      padding: 0 10px;
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--field-bg);
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus,
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+      background: #fff;
+    }
+
+    /* ── Color row ───────────────────────────────────────────────── */
+    .color-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .color-row select { width: 110px; flex-shrink: 0; }
+    .color-row .hex-input { flex: 1; min-width: 0; }
+
+    .color-swatch {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--r);
+      flex-shrink: 0;
+      cursor: pointer;
+      box-shadow: inset 0 0 0 1.5px rgba(0,0,0,.15);
+      transition: transform 0.12s, box-shadow 0.12s;
+      position: relative;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.1);
+      box-shadow: inset 0 0 0 2px rgba(0,0,0,.28);
+    }
+
+    .color-swatch.is-transparent {
+      background-image: repeating-conic-gradient(#bbb 0% 25%, #fff 0% 50%);
+      background-size: 8px 8px;
+    }
+
+    /* Hidden native color picker */
+    input[type="color"] {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+      width: 0; height: 0; border: 0; padding: 0;
+    }
+
+    .pick-link {
+      background: none;
+      border: none;
+      font: inherit;
+      font-size: 0.8125rem;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0 2px;
+      transition: opacity 0.12s;
+      white-space: nowrap;
+    }
+
+    .pick-link:hover { opacity: 0.65; }
+
+    /* ── Field trio (EC · Box · Border) ─────────────────────────── */
+    .field-trio {
+      display: grid;
+      grid-template-columns: 1.8fr 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field-trio .field-label { white-space: nowrap; overflow: hidden; }
+    .field-trio input,
+    .field-trio select { width: 100%; }
+
+    /* ── Generate button ─────────────────────────────────────────── */
+    .btn-generate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      height: 42px;
+      margin-top: 22px;
+      background: linear-gradient(160deg, #3b7cf8, var(--accent-dk));
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font: inherit;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      cursor: pointer;
+      box-shadow: 0 2px 10px rgba(37,99,235,.32);
+      transition: transform 0.13s, box-shadow 0.13s;
+    }
+
+    .btn-generate:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 18px rgba(37,99,235,.42);
+    }
+
+    .btn-generate:active {
+      transform: translateY(0);
+      box-shadow: 0 1px 5px rgba(37,99,235,.28);
+    }
+
+    /* ── Preview area ────────────────────────────────────────────── */
+    .preview-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--field-bg);
+      border: 1.5px dashed var(--border-in);
+      border-radius: 10px;
+      padding: 20px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+
+    .preview-area.has-qr {
+      border-style: solid;
+      border-color: var(--border);
+      background: #fff;
+    }
+
+    .preview-placeholder {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    #qr-canvas {
+      display: none;
+      max-width: 100%;
+      image-rendering: pixelated;
+      border-radius: 3px;
+    }
+
+    /* ── Action buttons ──────────────────────────────────────────── */
+    .preview-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: var(--r);
+      border: 1.5px solid var(--border-in);
+      background: #fff;
+      color: var(--text-2);
+      font: inherit;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: border-color 0.13s, color 0.13s, background 0.13s;
+    }
+
+    .btn-action:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: #eff6ff;
+    }
+
+    .btn-action:disabled { opacity: 0.38; cursor: not-allowed; }
+
+    /* ── Status ──────────────────────────────────────────────────── */
+    .status {
+      min-height: 18px;
+      margin-top: 10px;
+      font-size: 0.7875rem;
+      text-align: center;
+      color: transparent;
+      transition: color 0.18s;
+    }
+
+    .status.error   { color: #dc2626; }
+    .status.success { color: #16a34a; }
+
+    /* ── Footer ──────────────────────────────────────────────────── */
+    .page-footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.725rem;
+      color: var(--text-label);
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      body { padding-top: 24px; }
+
+      .card {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1px auto;
+      }
+
+      .pane-divider { width: auto; height: 1px; }
+
+      .preview-pane { border-top: none; }
+
+      .color-row select { width: 94px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ── Header ────────────────────────────────────────────────── -->
+  <header class="page-header">
+    <div class="logo">
+      <!-- QR icon -->
+      <svg class="logo-icon" width="34" height="34" viewBox="0 0 24 24"
+           fill="none" aria-hidden="true">
+        <rect x="2"  y="2"  width="8" height="8" rx="1.5"
+              stroke="currentColor" stroke-width="1.6"/>
+        <rect x="4"  y="4"  width="4" height="4" rx="0.6"
+              fill="currentColor"/>
+        <rect x="14" y="2"  width="8" height="8" rx="1.5"
+              stroke="currentColor" stroke-width="1.6"/>
+        <rect x="16" y="4"  width="4" height="4" rx="0.6"
+              fill="currentColor"/>
+        <rect x="2"  y="14" width="8" height="8" rx="1.5"
+              stroke="currentColor" stroke-width="1.6"/>
+        <rect x="4"  y="16" width="4" height="4" rx="0.6"
+              fill="currentColor"/>
+        <rect x="14" y="14" width="3" height="3" rx="0.5" fill="currentColor"/>
+        <rect x="19" y="14" width="3" height="3" rx="0.5" fill="currentColor"/>
+        <rect x="14" y="19" width="3" height="3" rx="0.5" fill="currentColor"/>
+        <rect x="19" y="19" width="3" height="3" rx="0.5" fill="currentColor"/>
+      </svg>
+      <div>
+        <div class="logo-name">Good QR Code Generator</div>
+        <div class="logo-tagline">Standard QR codes, generated privately in your browser</div>
+      </div>
+    </div>
+
+    <!-- Feature pills -->
+    <div class="features" role="list">
+
+      <span class="feature-pill" role="listitem">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <circle cx="6" cy="6" r="5.25" stroke="currentColor" stroke-width="1.25"/>
+          <path d="M3.5 6l1.8 1.8L8.5 4.5" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        No account or sign-up
+      </span>
+
+      <span class="feature-pill" role="listitem">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <circle cx="6" cy="6" r="5.25" stroke="currentColor" stroke-width="1.25"/>
+          <path d="M3.5 6l1.8 1.8L8.5 4.5" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        No tracking — nothing leaves your device
+      </span>
+
+      <span class="feature-pill" role="listitem">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <circle cx="6" cy="6" r="5.25" stroke="currentColor" stroke-width="1.25"/>
+          <path d="M3.5 6l1.8 1.8L8.5 4.5" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Direct links — no redirects or middlemen
+      </span>
+
+      <span class="feature-pill" role="listitem">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+          <circle cx="6" cy="6" r="5.25" stroke="currentColor" stroke-width="1.25"/>
+          <path d="M3.5 6l1.8 1.8L8.5 4.5" stroke="currentColor" stroke-width="1.3"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Works offline · any scanner
+      </span>
+
+    </div>
+  </header>
+
+  <!-- ── Main card ─────────────────────────────────────────────── -->
+  <main class="card">
+
+    <!-- Left: Settings -->
+    <section class="settings-pane">
+      <h2 class="pane-title">Settings</h2>
+
+      <div class="fields">
+
+        <!-- Data / URL -->
+        <div class="field">
+          <label class="field-label" for="url-input">Data / URL</label>
+          <input type="text" id="url-input"
+                 placeholder="https://example.com"
+                 autocomplete="off" spellcheck="false">
+        </div>
+
+        <!-- Foreground colour -->
+        <div class="field">
+          <label class="field-label">Foreground Color</label>
+          <div class="color-row">
+            <select id="fg-named" title="Named colour"></select>
+            <input type="text" class="hex-input" id="fg-hex"
+                   placeholder="#000000" autocomplete="off" spellcheck="false">
+            <div class="color-swatch" id="fg-swatch"
+                 title="Click to open colour picker"></div>
+            <input type="color" id="fg-picker">
+            <button class="pick-link" id="fg-pick-btn">Pick…</button>
+          </div>
+        </div>
+
+        <!-- Background colour -->
+        <div class="field">
+          <label class="field-label">Background Color</label>
+          <div class="color-row">
+            <select id="bg-named" title="Named colour"></select>
+            <input type="text" class="hex-input" id="bg-hex"
+                   placeholder="#ffffff" autocomplete="off" spellcheck="false">
+            <div class="color-swatch" id="bg-swatch"
+                 title="Click to open colour picker"></div>
+            <input type="color" id="bg-picker">
+            <button class="pick-link" id="bg-pick-btn">Pick…</button>
+          </div>
+        </div>
+
+        <!-- Error correction · Box size · Border -->
+        <div class="field-trio">
+          <div class="field">
+            <label class="field-label" for="ec-select">Error Correction</label>
+            <select id="ec-select">
+              <option value="L">L  –  7%</option>
+              <option value="M" selected>M  – 15%</option>
+              <option value="Q">Q  – 25%</option>
+              <option value="H">H  – 30%</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="box-size">Box Size (px)</label>
+            <select id="box-size"></select>
+          </div>
+          <div class="field">
+            <label class="field-label" for="border-input">Border</label>
+            <input type="number" id="border-input" value="4" min="0" max="20">
+          </div>
+        </div>
+
+      </div><!-- .fields -->
+
+      <!-- Generate -->
+      <button class="btn-generate" id="generate-btn">
+        <!-- Sparkle / generate icon -->
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"
+             stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M8 1v4M8 11v4M1 8h4M11 8h4
+                   M3.05 3.05l2.83 2.83M10.12 10.12l2.83 2.83
+                   M12.95 3.05l-2.83 2.83M5.88 10.12l-2.83 2.83"/>
+        </svg>
+        Generate QR Code
+      </button>
+    </section>
+
+    <!-- Column divider -->
+    <div class="pane-divider" aria-hidden="true"></div>
+
+    <!-- Right: Preview -->
+    <section class="preview-pane">
+      <h2 class="pane-title">Preview</h2>
+
+      <div class="preview-area" id="preview-area">
+        <span class="preview-placeholder" id="preview-placeholder">
+          No QR code generated yet.
+        </span>
+        <canvas id="qr-canvas"></canvas>
+      </div>
+
+      <div class="preview-actions">
+        <button class="btn-action" id="save-btn" disabled>
+          <!-- Download icon -->
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 2v8M5 7l3 3 3-3"/>
+            <path d="M2 13h12"/>
+          </svg>
+          Save image…
+        </button>
+        <button class="btn-action" id="copy-btn" disabled>
+          <!-- Copy icon -->
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"
+               stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="5" y="5" width="9" height="9" rx="1.5"/>
+            <path d="M11 5V3a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v7a1 1 0 0 0 1 1h2"/>
+          </svg>
+          Copy image
+        </button>
+      </div>
+
+      <div class="status" id="status"></div>
+    </section>
+
+  </main>
+
+  <footer class="page-footer">Good QR Code Generator</footer>
+
+</div><!-- .page -->
+
+<!-- ================================================================
+     Script — load qrcode-generator locally first, CDN as fallback
+     ================================================================ -->
+<script>
+  (function () {
+    'use strict';
+
+    // ------------------------------------------------------------------
+    // Library loader
+    // ------------------------------------------------------------------
+    function loadScript(localSrc, cdnSrc) {
+      return new Promise(function (resolve, reject) {
+        var s = document.createElement('script');
+        s.src = localSrc;
+        s.onload = resolve;
+        s.onerror = function () {
+          var s2 = document.createElement('script');
+          s2.src = cdnSrc;
+          s2.onload = resolve;
+          s2.onerror = reject;
+          document.head.appendChild(s2);
+        };
+        document.head.appendChild(s);
+      });
+    }
+
+    loadScript(
+      './libs/qrcode-generator.min.js',
+      'https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js'
+    ).then(initApp).catch(function () {
+      document.querySelector('.page').innerHTML =
+        '<p style="color:#dc2626;padding:32px;text-align:center">' +
+        'Failed to load the QR code library.<br>' +
+        'Please ensure <code>libs/qrcode-generator.min.js</code> exists ' +
+        'or check your internet connection for CDN fallback.</p>';
+    });
+
+    // ------------------------------------------------------------------
+    // Constants (mirror the desktop app)
+    // ------------------------------------------------------------------
+    var NAMED_COLOURS = [
+      'black', 'white', 'transparent',
+      'dimgray', 'gray', 'silver',
+      'navy', 'royalblue', 'skyblue',
+      'teal', 'seagreen', 'limegreen',
+      'indigo', 'purple', 'hotpink',
+      'crimson', 'tomato', 'orange', 'gold',
+      'red', 'green', 'blue', 'yellow', 'cyan', 'magenta',
+    ];
+
+    // ------------------------------------------------------------------
+    // Application state
+    // ------------------------------------------------------------------
+    var currentQrCanvas = null;
+
+    // ------------------------------------------------------------------
+    // Init
+    // ------------------------------------------------------------------
+    function initApp() {
+      populateColourDropdown('fg-named', /*allowTransparent=*/false);
+      populateColourDropdown('bg-named', /*allowTransparent=*/true);
+
+      // Populate box sizes 1-20, default 10
+      var boxSel = document.getElementById('box-size');
+      for (var i = 1; i <= 20; i++) {
+        var opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i;
+        if (i === 10) opt.selected = true;
+        boxSel.appendChild(opt);
+      }
+
+      // Apply defaults
+      setColour('fg', 'black', /*allowTransparent=*/false);
+      setColour('bg', 'white', /*allowTransparent=*/true);
+
+      // Wire colour selectors
+      wireColourSelector('fg', /*allowTransparent=*/false);
+      wireColourSelector('bg', /*allowTransparent=*/true);
+
+      // Wire action buttons
+      document.getElementById('generate-btn').addEventListener('click', onGenerate);
+      document.getElementById('save-btn').addEventListener('click', onSave);
+      document.getElementById('copy-btn').addEventListener('click', onCopy);
+
+      // Enter key in URL field triggers generate
+      document.getElementById('url-input').addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') onGenerate();
+      });
+    }
+
+    // ------------------------------------------------------------------
+    // Colour dropdown
+    // ------------------------------------------------------------------
+    function populateColourDropdown(id, allowTransparent) {
+      var sel = document.getElementById(id);
+      var colours = allowTransparent
+        ? NAMED_COLOURS
+        : NAMED_COLOURS.filter(function (c) { return c !== 'transparent'; });
+
+      var empty = document.createElement('option');
+      empty.value = '';
+      empty.textContent = '— custom —';
+      sel.appendChild(empty);
+
+      colours.forEach(function (c) {
+        var opt = document.createElement('option');
+        opt.value = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+      });
+    }
+
+    // ------------------------------------------------------------------
+    // Colour get / set / update
+    // ------------------------------------------------------------------
+    function setColour(prefix, value, allowTransparent) {
+      var namedSel = document.getElementById(prefix + '-named');
+      var hexInput = document.getElementById(prefix + '-hex');
+      var v = value.trim().toLowerCase();
+      var colours = allowTransparent
+        ? NAMED_COLOURS
+        : NAMED_COLOURS.filter(function (c) { return c !== 'transparent'; });
+
+      if (colours.indexOf(v) !== -1) {
+        namedSel.value = v;
+        hexInput.value = '';
+      } else {
+        namedSel.value = '';
+        hexInput.value = value.trim();
+      }
+      updateSwatch(prefix);
+    }
+
+    function getColour(prefix) {
+      var hex = document.getElementById(prefix + '-hex').value.trim();
+      if (hex) return hex;
+      var named = document.getElementById(prefix + '-named').value;
+      return named || 'black';
+    }
+
+    function updateSwatch(prefix) {
+      var swatch = document.getElementById(prefix + '-swatch');
+      var val = getColour(prefix);
+      if (val.toLowerCase() === 'transparent') {
+        swatch.className = 'color-swatch is-transparent';
+        swatch.style.backgroundColor = '';
+      } else {
+        swatch.className = 'color-swatch';
+        swatch.style.backgroundColor = val;
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // Wire a colour selector (named dropdown + hex input + swatch + picker)
+    // ------------------------------------------------------------------
+    function wireColourSelector(prefix, allowTransparent) {
+      var namedSel = document.getElementById(prefix + '-named');
+      var hexInput = document.getElementById(prefix + '-hex');
+      var picker   = document.getElementById(prefix + '-picker');
+      var swatch   = document.getElementById(prefix + '-swatch');
+      var pickBtn  = document.getElementById(prefix + '-pick-btn');
+
+      namedSel.addEventListener('change', function () {
+        if (namedSel.value) hexInput.value = '';
+        updateSwatch(prefix);
+      });
+
+      hexInput.addEventListener('input', function () {
+        if (hexInput.value.trim()) namedSel.value = '';
+        updateSwatch(prefix);
+      });
+
+      function openPicker() {
+        var current = getColour(prefix);
+        if (current.toLowerCase() !== 'transparent') {
+          var hex = current.startsWith('#') ? current : namedToHex(current);
+          if (hex) picker.value = hex;
+        }
+        picker.click();
+      }
+
+      swatch.addEventListener('click', openPicker);
+      pickBtn.addEventListener('click', openPicker);
+
+      picker.addEventListener('input', function () {
+        hexInput.value = picker.value;
+        namedSel.value = '';
+        updateSwatch(prefix);
+      });
+    }
+
+    // Convert a CSS named colour to #rrggbb via a 1×1 canvas pixel
+    function namedToHex(name) {
+      try {
+        var c = document.createElement('canvas');
+        c.width = c.height = 1;
+        var ctx = c.getContext('2d');
+        ctx.fillStyle = name;
+        ctx.fillRect(0, 0, 1, 1);
+        var d = ctx.getImageData(0, 0, 1, 1).data;
+        return '#' + [d[0], d[1], d[2]].map(function (v) {
+          return v.toString(16).padStart(2, '0');
+        }).join('');
+      } catch (e) {
+        return null;
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // QR Code generation
+    // ------------------------------------------------------------------
+    function onGenerate() {
+      var url = document.getElementById('url-input').value.trim();
+      if (!url) {
+        showStatus('Please enter a URL or text to encode.', 'error');
+        return;
+      }
+
+      var fg = getColour('fg');
+      var bg = getColour('bg');
+      var ec = document.getElementById('ec-select').value;        // L M Q H
+      var boxSize = parseInt(document.getElementById('box-size').value, 10) || 10;
+      var border  = parseInt(document.getElementById('border-input').value, 10);
+      if (isNaN(border) || border < 0) border = 4;
+
+      try {
+        var canvas = buildQRCanvas(url, fg, bg, ec, boxSize, border);
+        showPreview(canvas);
+        currentQrCanvas = canvas;
+        document.getElementById('save-btn').disabled = false;
+        document.getElementById('copy-btn').disabled = false;
+        showStatus('', '');
+      } catch (e) {
+        showStatus('Error: ' + e.message, 'error');
+      }
+    }
+
+    function buildQRCanvas(text, fg, bg, ecLevel, boxSize, border) {
+      var qr = qrcode(0, ecLevel);
+      qr.addData(text);
+      qr.make();
+
+      var moduleCount = qr.getModuleCount();
+      var size = (moduleCount + border * 2) * boxSize;
+
+      var canvas = document.createElement('canvas');
+      canvas.width  = size;
+      canvas.height = size;
+      var ctx = canvas.getContext('2d');
+
+      if (bg.toLowerCase() === 'transparent') {
+        ctx.clearRect(0, 0, size, size);
+      } else {
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, size, size);
+      }
+
+      ctx.fillStyle = fg;
+      for (var row = 0; row < moduleCount; row++) {
+        for (var col = 0; col < moduleCount; col++) {
+          if (qr.isDark(row, col)) {
+            ctx.fillRect(
+              (border + col) * boxSize,
+              (border + row) * boxSize,
+              boxSize, boxSize
+            );
+          }
+        }
+      }
+
+      return canvas;
+    }
+
+    // ------------------------------------------------------------------
+    // Preview display
+    // ------------------------------------------------------------------
+    function showPreview(srcCanvas) {
+      var displayCanvas = document.getElementById('qr-canvas');
+      var placeholder   = document.getElementById('preview-placeholder');
+      var previewArea   = document.getElementById('preview-area');
+
+      var maxDim = 300;
+      var rawScale = Math.min(maxDim / srcCanvas.width, maxDim / srcCanvas.height);
+      var scale = rawScale >= 1 ? Math.floor(rawScale) : rawScale;
+      var dispW = Math.round(srcCanvas.width  * scale);
+      var dispH = Math.round(srcCanvas.height * scale);
+
+      displayCanvas.width  = dispW;
+      displayCanvas.height = dispH;
+      var ctx = displayCanvas.getContext('2d');
+
+      // Checkerboard for transparency
+      drawCheckerboard(ctx, dispW, dispH, 8);
+
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(srcCanvas, 0, 0, dispW, dispH);
+
+      placeholder.style.display = 'none';
+      displayCanvas.style.display = 'block';
+      previewArea.classList.add('has-qr');
+    }
+
+    function drawCheckerboard(ctx, w, h, tile) {
+      for (var y = 0; y < h; y += tile) {
+        for (var x = 0; x < w; x += tile) {
+          ctx.fillStyle = (Math.floor(x / tile) + Math.floor(y / tile)) % 2 === 0
+            ? '#ffffff' : '#cccccc';
+          ctx.fillRect(x, y, Math.min(tile, w - x), Math.min(tile, h - y));
+        }
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // Save
+    // ------------------------------------------------------------------
+    function onSave() {
+      if (!currentQrCanvas) return;
+      var link = document.createElement('a');
+      link.download = 'qrcode.png';
+      link.href = currentQrCanvas.toDataURL('image/png');
+      link.click();
+      showStatus('QR code saved as PNG.', 'success');
+    }
+
+    // ------------------------------------------------------------------
+    // Copy to clipboard
+    // ------------------------------------------------------------------
+    function onCopy() {
+      if (!currentQrCanvas) return;
+
+      if (!navigator.clipboard || !window.ClipboardItem) {
+        showStatus('Clipboard API not available in this browser or context.', 'error');
+        return;
+      }
+
+      currentQrCanvas.toBlob(function (blob) {
+        navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })])
+          .then(function () {
+            showStatus('QR code copied to clipboard.', 'success');
+          })
+          .catch(function (e) {
+            showStatus('Copy failed: ' + e.message, 'error');
+          });
+      }, 'image/png');
+    }
+
+    // ------------------------------------------------------------------
+    // Status bar
+    // ------------------------------------------------------------------
+    function showStatus(msg, type) {
+      var el = document.getElementById('status');
+      el.textContent = msg;
+      el.className = 'status' + (type ? ' ' + type : '');
+    }
+
+  }());
+</script>
+</body>
+</html>

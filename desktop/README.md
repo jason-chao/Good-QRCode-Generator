@@ -1,6 +1,6 @@
 # 📷 Good QR Code Generator
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](../LICENSE)
 
 A desktop app that generates standard QR codes — locally, privately, and without fuss. Available on Windows, macOS, and Linux.
 
@@ -106,7 +106,7 @@ Default settings are stored in `config.ini` next to the executable. Edit it to c
 
 ```ini
 [defaults]
-url              = https://github.com/jason-chao/QRCode_Generator_Desktop
+url              = https://good-qrcode.github.io/
 foreground       = black
 background       = white
 error_correction = L   # L, M, Q, or H
@@ -117,7 +117,7 @@ border           = 2   # quiet-zone width in modules
 ## 📁 Project structure
 
 ```
-qrcode-gen/
+desktop/
 ├── qrcode_gen.py          # Application source
 ├── qrcode_gen.spec        # PyInstaller spec (cross-platform)
 ├── generate_icon.py       # Generates assets/icon.{png,ico,icns}

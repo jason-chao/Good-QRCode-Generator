@@ -10,22 +10,26 @@ Most QR code tools make you sign up, show you ads, log what you encode, or wrap 
 
 ## Two flavours, same philosophy
 
-| | [Desktop](desktop/) | [Web](web/) |
+| | [Web](web/) | [Desktop](desktop/) |
 |---|---|---|
-| **What it is** | Native app (Python / Tkinter) | Single-page HTML |
-| **Platforms** | Windows, macOS, Linux | Any modern browser |
-| **How to run** | Download binary or run from source | Open `index.html` — no server needed |
-| **Output formats** | PNG, JPEG, BMP, GIF, TIFF, WebP, ICO | PNG (save or copy to clipboard) |
+| **What it is** | Single-page HTML | Native app (Python / Tkinter) |
+| **Platforms** | Any modern browser | Windows, macOS, Linux |
+| **How to run** | Open `index.html` — no server needed | Download binary or run from source |
+| **Output formats** | PNG (save or copy to clipboard) | PNG, JPEG, BMP, GIF, TIFF, WebP, ICO |
 
 Both versions support colour customisation, transparent backgrounds, error correction levels, and adjustable module size and quiet-zone border.
+
+| Web | Desktop |
+|---|---|
+| ![Web version](web/assets/screenshot_web.png) | ![Desktop version (Windows 11)](desktop/assets/screenshot_win11.png) |
 
 ---
 
 ## Getting started
 
-**Desktop app** → see [desktop/README.md](desktop/README.md)
-
 **Web app** → open [web/index.html](web/index.html) in your browser, or see [web/README.md](web/README.md)
+
+**Desktop app** → see [desktop/README.md](desktop/README.md)
 
 ---
 

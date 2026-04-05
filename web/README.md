@@ -6,6 +6,8 @@ A single-page HTML QR code generator that runs entirely in your browser — no s
 
 Open `index.html` directly from your file system (no web server needed) or serve it from any static host.
 
+![Screenshot](assets/screenshot_web.png)
+
 ## Features
 
 - Encode any URL or text into a standard, scanner-compatible QR code
@@ -41,6 +43,8 @@ The library [`qrcode-generator`](https://github.com/kazuhikoarase/qrcode-generat
 ```
 web/
 ├── index.html        # The entire application (self-contained)
+├── assets/
+│   └── screenshot_web.png
 └── libs/
     └── qrcode-generator.min.js   # Bundled QR library (local-first)
 ```

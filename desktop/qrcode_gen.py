@@ -68,7 +68,7 @@ def load_config() -> dict:
     cfg.read(CONFIG_FILE)
     d = cfg["defaults"] if "defaults" in cfg else {}
     return {
-        "url":              d.get("url",              "https://github.com/jason-chao/QRCode_Generator_Desktop"),
+        "url":              d.get("url",              "https://good-qrcode.github.io/"),
         "foreground":       d.get("foreground",       "black"),
         "background":       d.get("background",       "white"),
         "error_correction": d.get("error_correction", "M"),

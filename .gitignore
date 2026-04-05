@@ -4,8 +4,8 @@ venv/
 env/
 
 # PyInstaller build output
-desktop/build/
-desktop/dist/
+build/
+dist/
 *.spec.bak
 
 # Python cache

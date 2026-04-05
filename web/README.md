@@ -4,6 +4,8 @@
 
 A single-page HTML QR code generator that runs entirely in your browser — no server, no account, no tracking.
 
+**Live version** → [good-qrcode.com](https://good-qrcode.com/)
+
 Open `index.html` directly from your file system (no web server needed) or serve it from any static host.
 
 ![Screenshot](assets/screenshot_web.png)

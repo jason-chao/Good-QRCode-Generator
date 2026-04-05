@@ -27,9 +27,13 @@ Both versions support colour customisation, transparent backgrounds, error corre
 
 ## Getting started
 
-**Web app** → open [web/index.html](web/index.html) in your browser, or see [web/README.md](web/README.md)
+**Live web app** → [good-qrcode.com](https://good-qrcode.com/)
+
+**Web app (local)** → open [web/index.html](web/index.html) in your browser, or see [web/README.md](web/README.md)
 
 **Desktop app** → see [desktop/README.md](desktop/README.md)
+
+**Project home** → [good-qrcode.github.io](https://good-qrcode.github.io/) · **GitHub** → [good-qrcode/Good-QRCode](https://github.com/good-qrcode/Good-QRCode/)
 
 ---
 
